@@ -31,4 +31,4 @@ npm start
 
 ## License
 
-MIT © 2020 [Sergio Sánchez Vallés](https://github.com/SergioSV96)
+AGPL-3.0 © 2020 [Sergio Sánchez Vallés](https://github.com/SergioSV96)
