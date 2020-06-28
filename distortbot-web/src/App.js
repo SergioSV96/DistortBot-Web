@@ -1,7 +1,9 @@
 import React from 'react';
 import './App.css';
-import { main, File } from 'magica'
-
+import { initializeImageMagick, ImageMagick } from "@imagemagick/magick-wasm/image-magick";
+import { Magick } from "@imagemagick/magick-wasm/magick"
+import { MagickFormat } from '@imagemagick/magick-wasm/magick-format';
+import { Quantum } from '@imagemagick/magick-wasm/quantum';
 
 class FileDisplay extends React.Component {
   render() {
@@ -12,7 +14,7 @@ class FileDisplay extends React.Component {
 }
 
 // TODO: Add Web Worker, this is extremely low
-async function distort(file) {
+/*async function distort(file) {
   let inputFile = await File.fromUrl(URL.createObjectURL(file));
   const result = await main({
     debug: true,
@@ -20,8 +22,25 @@ async function distort(file) {
     inputFiles: [inputFile]
   })
   return File.toDataUrl(result.outputFiles[0]);
-}
+}*/
 
+async function distort(file) {
+  let blob = await file.arrayBuffer();
+
+  await initializeImageMagick();
+  console.log(Magick.imageMagickVersion);
+  console.log('Delegates:', Magick.delegates);
+  console.log('Features:', Magick.features);
+  console.log('Quantum:', Quantum.depth);
+
+  return ImageMagick.read(blob, (image) => {
+    image.resize(100, 100);
+    image.blur(1, 5);
+    image.write((data) => {
+      console.log(data.length);
+    }, MagickFormat.Jpeg);
+  });
+}
 
 class FileUpload extends React.Component {
   constructor(props) {
@@ -30,7 +49,6 @@ class FileUpload extends React.Component {
       file: null,
       distortedFile: null
     };
-
     this.handleChange = this.handleChange.bind(this);
   }
 
@@ -39,10 +57,11 @@ class FileUpload extends React.Component {
     this.setState({
       file: URL.createObjectURL(file)
     });
+    let distortedFile = await distort(file);
+    /*this.setState({
+      distortedFile: distortedFile
+    });*/
 
-    this.setState({
-      distortedFile: await distort(file)
-    });
   }
 
   render() {
@@ -51,7 +70,8 @@ class FileUpload extends React.Component {
         <input type="file" onChange={this.handleChange}></input>
         <br></br>
         <FileDisplay file={this.state.file} />
-        <FileDisplay file={this.state.distortedFile} />
+        <br></br>
+        <FileDisplay file={this.state.file} />
       </div>
     );
   }
@@ -59,16 +79,15 @@ class FileUpload extends React.Component {
 
 function Header() {
   return (
-    <header className="App-header">
-      <div className="container h-100">
-        <div className="d-flex h-100 text-center align-items-center">
-          <div className="w-100 text-black">
-            <h1 className="display-3">DistortBot</h1>
-            <p className="lead mb-0">This is in prealpha</p>
-          </div>
-        </div>
+    <section className="jumbotron text-center">
+      <div className="container">
+        <h1 className="jumbotron-heading">DistortBot</h1>
+        <p className="lead text-muted">This is in pre-alpha, drag your image below and see it getting distorted!</p>
+        <p>
+          <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" className="twitter-share-button" data-show-count="false">Tweet</a>
+        </p>
       </div>
-    </header>
+    </section>
   )
 }
 
