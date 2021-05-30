@@ -26,20 +26,24 @@ class FileDisplay extends React.Component {
 
 async function distort(file) {
   let blob = await file.arrayBuffer();
-
+  const imageData = new Uint8Array(blob);
   await initializeImageMagick();
   console.log(Magick.imageMagickVersion);
   console.log('Delegates:', Magick.delegates);
   console.log('Features:', Magick.features);
   console.log('Quantum:', Quantum.depth);
-
-  return ImageMagick.read(blob, (image) => {
+  let result;
+  ImageMagick.read(imageData, (image) => {
     image.resize(100, 100);
+    image.implode(0.25);
     image.blur(1, 5);
     image.write((data) => {
       console.log(data.length);
+      console.log(data);
+      result = new Blob([data]);
     }, MagickFormat.Jpeg);
   });
+  return result;
 }
 
 class FileUpload extends React.Component {
@@ -58,9 +62,10 @@ class FileUpload extends React.Component {
       file: URL.createObjectURL(file)
     });
     let distortedFile = await distort(file);
-    /*this.setState({
-      distortedFile: distortedFile
-    });*/
+    console.log(distortedFile)
+    this.setState({
+      distortedFile: URL.createObjectURL(distortedFile)
+    });
 
   }
 
@@ -71,7 +76,7 @@ class FileUpload extends React.Component {
         <br></br>
         <FileDisplay file={this.state.file} />
         <br></br>
-        <FileDisplay file={this.state.file} />
+        <FileDisplay file={this.state.distortedFile} />
       </div>
     );
   }
